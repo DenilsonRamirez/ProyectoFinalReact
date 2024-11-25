@@ -1,4 +1,6 @@
 // src/utils/api.js
+const apiUrl = import.meta.env.VITE_API_URL;
+
 const makeRequest = async (url, method = 'GET', body = null) => {
     const token = localStorage.getItem('token');
     
@@ -17,7 +19,7 @@ const makeRequest = async (url, method = 'GET', body = null) => {
     }
 
     try {
-        const response = await fetch(`http://localhost:3000${url}`, options);
+        const response = await fetch(`${apiUrl}${url}`, options);
         
         if (response.status === 401) {
             localStorage.removeItem('token');
