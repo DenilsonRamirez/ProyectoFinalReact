@@ -20,14 +20,18 @@ const makeRequest = async (url, method = 'GET', body = null) => {
 
     try {
         const response = await fetch(`${apiUrl}${url}`, options);
-        
+        console.log(`Response status: ${response.status}`);
+
         if (response.status === 401) {
+            console.warn('Unauthorized. Redirecting to login.');
             localStorage.removeItem('token');
             window.location.href = '/login';
             return;
         }
         
-        return await response.json();
+        const data = await response.json();
+        console.log(`Response data:`, data);
+        return data;
     } catch (error) {
         console.error('API Error:', error);
         throw error;

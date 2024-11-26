@@ -14,7 +14,7 @@ const Login = () => {
             password: password
         };
 
-        fetch('http://localhost:3000/login', {
+        fetch(`${import.meta.env.VITE_API_URL}/login`, { // Usamos VITE_API_URL
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
