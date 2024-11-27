@@ -12,7 +12,10 @@ const ProjectManagement = () => {
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
   const [isFormVisible, setIsFormVisible] = useState(false);
+  const [monthlyData, setMonthlyData] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [formData, setFormData] = useState({
+    
     name: '',
     created_at: '',
     updated_at: '',
@@ -22,7 +25,40 @@ const ProjectManagement = () => {
   // Cargar proyectos al montar el componente
   useEffect(() => {
     loadProjects();
+
+    const fetchMonthlyProgress = async () => {
+      try {
+        const response = await api.getMonthlyProgress();
+        
+        // Transform the data to match the chart's expected format
+        const formattedData = response.map(item => ({
+          name: formatMonthName(item.month),
+          completedTasks: item.completadas,
+          openTasks: item.pendientes + item.fallidas // Combining pending and failed tasks
+        })).reverse(); // Reverse to show most recent months first
+
+        setMonthlyData(formattedData);
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Error fetching monthly progress:', error);
+        setIsLoading(false);
+      }
+    };
+
+    fetchMonthlyProgress();
   }, []);
+
+  const formatMonthName = (monthString) => {
+    const months = [
+      'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 
+      'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'
+    ];
+    
+    const [year, month] = monthString.split('-');
+    const monthIndex = parseInt(month) - 1;
+    
+    return months[monthIndex];
+  };
 
   // Función auxiliar para formatear fechas para mostrar
   const formatDateForDisplay = (dateString) => {
@@ -114,6 +150,14 @@ const ProjectManagement = () => {
     resetForm();
     setIsFormVisible(true);
   };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent>Cargando...</CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -252,22 +296,27 @@ const ProjectManagement = () => {
             <CardTitle>Métricas del Proyecto</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className={`${isFormVisible ? 'h-64' : 'h-80'} w-full`}>
+            <div className="w-full h-64">
               <ResponsiveContainer width="101%" height="105%">
-                <AreaChart data={[
-                  { name: 'Ene', completedTasks: 10, openTasks: 5 },
-                  { name: 'Feb', completedTasks: 15, openTasks: 3 },
-                  { name: 'Mar', completedTasks: 22, openTasks: 8 },
-                  { name: 'Abr', completedTasks: 28, openTasks: 4 },
-                  { name: 'May', completedTasks: 32, openTasks: 3 },
-                  { name: 'Jun', completedTasks: 32, openTasks: 2 },
-                ]}>
+                <AreaChart data={monthlyData}>
                   <XAxis dataKey="name" />
                   <YAxis />
                   <CartesianGrid strokeDasharray="3 3" />
                   <Tooltip />
-                  <Area type="monotone" dataKey="completedTasks" stroke="#10b981" fill="#10b981" name="Tareas Completadas" />
-                  <Area type="monotone" dataKey="openTasks" stroke="#ef4444" fill="#ef4444" name="Tareas Pendientes" />
+                  <Area 
+                    type="monotone" 
+                    dataKey="completedTasks" 
+                    stroke="#10b981" 
+                    fill="#10b981" 
+                    name="Tareas Completadas" 
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="openTasks" 
+                    stroke="#ef4444" 
+                    fill="#ef4444" 
+                    name="Tareas Pendientes" 
+                  />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
