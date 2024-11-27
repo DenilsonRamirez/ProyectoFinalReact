@@ -1,18 +1,18 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Separator } from "@/components/ui/separator";
-import { PlusCircle, Calendar, ChevronLeft, ChevronRight, Pencil, Trash2 } from 'lucide-react';
+import { X, PlusCircle, Pencil, Trash2 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { api } from '../../utils/api';
 
 const ProjectManagement = () => {
-  const [projects, setProjects] = React.useState([]);
-  const [selectedProject, setSelectedProject] = React.useState(null);
-  const [formData, setFormData] = React.useState({
+  const [projects, setProjects] = useState([]);
+  const [selectedProject, setSelectedProject] = useState(null);
+  const [isFormVisible, setIsFormVisible] = useState(false);
+  const [formData, setFormData] = useState({
     name: '',
     created_at: '',
     updated_at: '',
@@ -27,19 +27,15 @@ const ProjectManagement = () => {
   // Función auxiliar para formatear fechas para mostrar
   const formatDateForDisplay = (dateString) => {
     if (!dateString) return '';
-    // Convierte la fecha ISO a objeto Date
     const date = new Date(dateString);
-    // Ajusta la zona horaria local y formatea a YYYY-MM-DD
     return date.toISOString().split('T')[0];
   };  
 
   // Función auxiliar para formatear fechas para enviar al servidor
   const formatDateForServer = (dateString) => {
     if (!dateString) return '';
-    // Asegura que la fecha esté en formato ISO
     return new Date(dateString).toISOString();
   };
-
 
   const loadProjects = async () => {
     try {
@@ -92,7 +88,7 @@ const ProjectManagement = () => {
     }
   };
 
-    const handleEdit = (project) => {
+  const handleEdit = (project) => {
     setSelectedProject(project);
     setFormData({
       name: project.name,
@@ -100,7 +96,9 @@ const ProjectManagement = () => {
       updated_at: formatDateForDisplay(project.updated_at),
       status: project.status.toLowerCase().replace(' ', '-')
     });
+    setIsFormVisible(true);
   };
+
   const resetForm = () => {
     setSelectedProject(null);
     setFormData({
@@ -109,13 +107,22 @@ const ProjectManagement = () => {
       updated_at: '',
       status: ''
     });
+    setIsFormVisible(false);
+  };
+
+  const showNewProjectForm = () => {
+    resetForm();
+    setIsFormVisible(true);
   };
 
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Gestión de Proyectos</h2>
-        <Button className="flex items-center gap-2" onClick={resetForm}>
+        <Button 
+          className="flex items-center gap-2" 
+          onClick={showNewProjectForm}
+        >
           <PlusCircle className="h-4 w-4" />
           Nuevo Proyecto
         </Button>
@@ -175,69 +182,78 @@ const ProjectManagement = () => {
 
       {/* Panel de Proyectos */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              {selectedProject ? 'Editar Proyecto' : 'Nuevo Proyecto'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Nombre del Proyecto</label>
-              <Input 
-                placeholder="Nombre del proyecto" 
-                value={formData.name}
-                onChange={(e) => setFormData({...formData, name: e.target.value})}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Fecha de Inicio</label>
-              <Input 
-                type="date"
-                value={formData.created_at}
-                onChange={(e) => setFormData({...formData, created_at: e.target.value})}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Fecha de Fin</label>
-              <Input 
-                type="date"
-                value={formData.updated_at}
-                onChange={(e) => setFormData({...formData, updated_at: e.target.value})}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Estado</label>
-              <Select 
-                value={formData.status}
-                onValueChange={(value) => setFormData({...formData, status: value})}
+        {isFormVisible && (
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>
+                {selectedProject ? 'Editar Proyecto' : 'Nuevo Proyecto'}
+              </CardTitle>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setIsFormVisible(false)}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccione estado" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="en-progreso">En Progreso</SelectItem>
-                  <SelectItem value="completado">Completado</SelectItem>
-                  <SelectItem value="pendiente">Pendiente</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <Button 
-              className="w-full"
-              onClick={selectedProject ? handleUpdateProject : handleCreateProject}
-            >
-              {selectedProject ? 'Actualizar Proyecto' : 'Guardar Proyecto'}
-            </Button>
-          </CardContent>
-        </Card>
+                <X className="h-4 w-4" />
+              </Button>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Nombre del Proyecto</label>
+                <Input 
+                  placeholder="Nombre del proyecto" 
+                  value={formData.name}
+                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Fecha de Inicio</label>
+                <Input 
+                  type="date"
+                  value={formData.created_at}
+                  onChange={(e) => setFormData({...formData, created_at: e.target.value})}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Fecha de Fin</label>
+                <Input 
+                  type="date"
+                  value={formData.updated_at}
+                  onChange={(e) => setFormData({...formData, updated_at: e.target.value})}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Estado</label>
+                <Select 
+                  value={formData.status}
+                  onValueChange={(value) => setFormData({...formData, status: value})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccione estado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="en-progreso">En Progreso</SelectItem>
+                    <SelectItem value="completado">Completado</SelectItem>
+                    <SelectItem value="pendiente">Pendiente</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button 
+                className="w-full"
+                onClick={selectedProject ? handleUpdateProject : handleCreateProject}
+              >
+                {selectedProject ? 'Actualizar Proyecto' : 'Guardar Proyecto'}
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
-        <Card>
+        <Card className={`${isFormVisible ? 'md:col-span-1' : 'md:col-span-2'}`}>
           <CardHeader>
             <CardTitle>Métricas del Proyecto</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-80 w-full">
-              <ResponsiveContainer width="105%" height="105%">
+            <div className={`${isFormVisible ? 'h-64' : 'h-80'} w-full`}>
+              <ResponsiveContainer width="101%" height="105%">
                 <AreaChart data={[
                   { name: 'Ene', completedTasks: 10, openTasks: 5 },
                   { name: 'Feb', completedTasks: 15, openTasks: 3 },
