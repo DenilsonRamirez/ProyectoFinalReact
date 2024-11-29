@@ -17,28 +17,41 @@ const getAllTests = (req, res) => {
 // Crear prueba
 const createTest = (req, res) => {
     const { name, project_id, user_id, status = 'pending' } = req.body;
-    const query = 'INSERT INTO tests (name, status, created_at, project_id, user_id) VALUES (?, ?, NOW(), ?, ?)';
+    const query = 'INSERT INTO tests (name, status, created_at, updated_at, project_id, user_id) VALUES (?, ?, NOW(), NOW(), ?, ?)';
     
     connection.query(query, [name, status, project_id, user_id], (err, result) => {
         if (err) {
-            res.status(500).send(err);
+            console.error('Error creating test:', err);
+            res.status(500).json({ 
+                message: 'An error occurred while creating the test', 
+                error: err.message 
+            });
             return;
         }
-        res.json({ id: result.insertId, message: 'Test created successfully' });
+        res.status(201).json({ id: result.insertId, message: 'Test created successfully' });
     });
 };
 
 // Actualizar prueba
 const updateTest = (req, res) => {
     const { id } = req.params;
-    const { name, status, user_id } = req.body;
-    const query = 'UPDATE tests SET name = ?, status = ?, user_id = ? WHERE id = ?';
+    const { name, project_id, status, user_id } = req.body;
+    const query = 'UPDATE tests SET name = ?, status = ?, updated_at = NOW(), project_id = ?, user_id = ? WHERE id = ?';
     
-    connection.query(query, [name, status, user_id, id], (err, result) => {
+    connection.query(query, [name, status, project_id, user_id, id], (err, result) => {
         if (err) {
-            res.status(500).send(err);
+            console.error('Error updating test:', err);
+            res.status(500).json({ 
+                message: 'An error occurred while updating the test', 
+                error: err.message 
+            });
             return;
         }
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: 'Test not found' });
+        }
+
         res.json({ message: 'Test updated successfully' });
     });
 };

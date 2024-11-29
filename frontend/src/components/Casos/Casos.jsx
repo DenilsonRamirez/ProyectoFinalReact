@@ -8,15 +8,17 @@ import { PlusCircle, Edit2, Trash2, X } from 'lucide-react';
 import { ResponsiveContainer } from 'recharts';
 import { api } from '../../utils/api';
 
-const casos = () => {
+const Casos = () => {
   const [testCases, setTestCases] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [currentTest, setCurrentTest] = useState({
     name: '',
-    status: '',
-    user_id: ''
+    status: 'pending',
+    project_id: '', 
+    user_id: '',
+    id: null 
   });
 
   // Cargar casos de prueba
@@ -28,42 +30,75 @@ const casos = () => {
     try {
       const tests = await api.getTests();
       setTestCases(tests);
+      setIsLoading(false);
     } catch (error) {
       console.error('Error fetching tests:', error);
-    } finally {
       setIsLoading(false);
     }
   };
 
-  // Crear nuevo caso de prueba
+  // Función auxiliar para formatear fechas para mostrar
+  const formatDateForDisplay = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toISOString().split('T')[0];
+  }; 
+
+  // Crear o actualizar caso de prueba
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const projectId = currentTest.project_id ? Number(currentTest.project_id) : 0;
+      const userId = currentTest.user_id ? Number(currentTest.user_id) : 0;
+
       if (isEditing) {
-        await api.updateTest(currentTest.id, currentTest);
+        await api.updateTest(currentTest.id, {
+          name: currentTest.name,
+          status: currentTest.status,
+          project_id: projectId,
+          user_id: userId
+        });
       } else {
-        await api.createTest(currentTest);
+        await api.createTest({
+          name: currentTest.name,
+          status: currentTest.status,
+          project_id: projectId,
+          user_id: userId
+        });
       }
       
       // Recargar la lista
       await fetchTestCases();
       
       // Limpiar formulario y ocultar
-      setCurrentTest({
-        name: '',
-        status: '',
-        user_id: ''
-      });
-      setIsEditing(false);
-      setIsFormVisible(false);
+      resetForm();
     } catch (error) {
       console.error('Error saving test:', error);
     }
   };
 
+  // Resetear formulario
+  const resetForm = () => {
+    setCurrentTest({
+      name: '',
+      status: 'pending',
+      project_id: '',
+      user_id: '',
+      id: null
+    });
+    setIsEditing(false);
+    setIsFormVisible(false);
+  };
+
   // Editar caso de prueba
   const handleEdit = (testCase) => {
-    setCurrentTest(testCase);
+    setCurrentTest({
+      id: testCase.id,
+      name: testCase.name,
+      status: testCase.status,
+      user_id: testCase.user_id,
+      project_id: testCase.project_id
+    });
     setIsEditing(true);
     setIsFormVisible(true);
   };
@@ -90,12 +125,7 @@ const casos = () => {
 
   // Mostrar formulario para nuevo caso
   const showNewTestForm = () => {
-    setIsEditing(false);
-    setCurrentTest({
-      name: '',
-      status: '',
-      user_id: ''
-    });
+    resetForm();
     setIsFormVisible(true);
   };
 
@@ -114,7 +144,7 @@ const casos = () => {
   }
 
   return (
-    <ResponsiveContainer width="220%" height="115%">
+    <ResponsiveContainer width="150%" height="115%">
       <div className="p-6 space-y-6">        
         <div className="flex justify-between items-center">
           <h2 className="text-2xl font-bold">Gestión de Casos de Prueba</h2>
@@ -174,6 +204,16 @@ const casos = () => {
                 
                 <div className="grid grid-cols-2 gap-4 mt-4">
                   <div className="space-y-2">
+                    <label className="text-sm font-medium">ID de Proyecto</label>
+                    <Input 
+                      placeholder="ID del proyecto"
+                      value={currentTest.project_id}
+                      onChange={(e) => handleChange('project_id', e.target.value)}
+                      type="number"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
                     <label className="text-sm font-medium">Asignar a (ID)</label>
                     <Input 
                       placeholder="ID del usuario"
@@ -200,6 +240,9 @@ const casos = () => {
                 <TableRow>
                   <TableHead>Nombre</TableHead>
                   <TableHead>Estado</TableHead>
+                  <TableHead>Creado el</TableHead>
+                  <TableHead>Modificado el</TableHead>
+                  <TableHead>Proyecto</TableHead>
                   <TableHead>Asignado a</TableHead>
                   <TableHead>Acciones</TableHead>
                 </TableRow>
@@ -213,6 +256,9 @@ const casos = () => {
                         {testCase.status}
                       </div>
                     </TableCell>
+                    <TableCell>{formatDateForDisplay(testCase.created_at)}</TableCell>
+                    <TableCell>{formatDateForDisplay(testCase.updated_at)}</TableCell>
+                    <TableCell>{testCase.project_id}</TableCell>
                     <TableCell>{testCase.user_id}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
@@ -238,11 +284,9 @@ const casos = () => {
             </Table>
           </CardContent>
         </Card>
-
-        
       </div>
     </ResponsiveContainer>
   );
 };
 
-export default casos;
+export default Casos;
