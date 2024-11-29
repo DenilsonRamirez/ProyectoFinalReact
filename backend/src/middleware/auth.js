@@ -9,7 +9,7 @@ const verifyToken = (req, res, next) => {
     }
 
     try {
-        const decoded = jwt.verify(token, "Stack"); // Usando la misma clave que en login
+        const decoded = jwt.verify(token, "Stack");
         req.user = decoded;
         next();
     } catch (err) {

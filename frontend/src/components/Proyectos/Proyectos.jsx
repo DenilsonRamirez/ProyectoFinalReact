@@ -30,12 +30,11 @@ const ProjectManagement = () => {
       try {
         const response = await api.getMonthlyProgress();
         
-        // Transform the data to match the chart's expected format
         const formattedData = response.map(item => ({
           name: formatMonthName(item.month),
           completedTasks: item.completadas,
-          openTasks: item.pendientes + item.fallidas // Combining pending and failed tasks
-        })).reverse(); // Reverse to show most recent months first
+          openTasks: item.pendientes + item.fallidas 
+        })).reverse(); 
 
         setMonthlyData(formattedData);
         setIsLoading(false);

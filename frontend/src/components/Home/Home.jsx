@@ -11,7 +11,7 @@ const Home = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const proyectos = await api.getProjects(); // Tu función para obtener proyectos
+        const proyectos = await api.getProjects(); 
         const monthlyData = processProyectos(proyectos);
         setMetrics(monthlyData);
       } catch (error) {

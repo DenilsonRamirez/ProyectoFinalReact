@@ -32,11 +32,6 @@ const items = [
     url: "/Reportes",
     icon: Search,
   },
-  {
-    title: "Settings",
-    url: "#",
-    icon: Settings,
-  },
 ]
 
 export function AppSidebar() {

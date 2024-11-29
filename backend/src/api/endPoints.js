@@ -1,10 +1,9 @@
 const express = require('express');
 const router = express.Router();
-
-// Importar controladores existentes
 const { ping } = require('../controllers/pingController');
 const { login } = require('../controllers/loginController');
-// Nuevos controladores
+
+//Controladores
 const { 
     getAllProjects,
     createProject,
